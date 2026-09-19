@@ -1,0 +1,42 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Sandboxes & runtime workspaces
+work/
+workspace/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Tool caches and generated data
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+chroma_db/
+*.sqlite3
+*.db
+outputs/*
+!outputs/.gitkeep
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local models and binaries
+models/*.gguf
+models/*.bin
+models/bin/
+*.zip

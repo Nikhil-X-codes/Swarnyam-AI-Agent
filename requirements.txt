@@ -1,0 +1,13 @@
+groq
+chromadb
+sentence-transformers
+tree-sitter
+tree-sitter-language-pack  # Python 3.13-compatible replacement
+pydantic
+pytest
+ruff
+duckduckgo-search
+unidiff
+click
+python-dotenv
+llama-cpp-python
