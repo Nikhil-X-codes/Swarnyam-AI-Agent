@@ -38,11 +38,8 @@ def _parse_plan(raw: str) -> Plan:
 
 def create_plan(task: str, *, max_retries: int = 3, llm: Any = call_llm) -> Plan:
     """Generate and validate a plan, retrying malformed model output."""
-    try:
-        from memory.logger import set_agent_context
-        set_agent_context("planner")
-    except ImportError:
-        pass
+    from memory.logger import set_agent_context
+    set_agent_context("planner")
 
     if not isinstance(task, str) or not task.strip():
         raise ValueError("task must be a non-empty string")
