@@ -1,0 +1,17 @@
+[
+  {"id":"calc-001","description":"Add a total function that sums a list of numbers.","checks":[{"path":"src/calculator.py","contains":["def total"]}]},
+  {"id":"calc-002","description":"Add a test for adding two negative numbers.","checks":[{"path":"tests/test_calculator.py","contains":["-2","-3"]}]},
+  {"id":"calc-003","description":"Add a test proving divide by zero raises ValueError.","checks":[{"path":"tests/test_calculator.py","contains":["raises(ValueError)"]}]},
+  {"id":"calc-004","description":"Add a subtract function to the calculator.","checks":[{"path":"src/calculator.py","contains":["def subtract"]}]},
+  {"id":"calc-005","description":"Add a multiply function to the calculator.","checks":[{"path":"src/calculator.py","contains":["def multiply"]}]},
+  {"id":"calc-006","description":"Add a test for floating-point division.","checks":[{"path":"tests/test_calculator.py","contains":["0.5"]}]},
+  {"id":"calc-007","description":"Add a test that total of an empty list is zero.","checks":[{"path":"tests/test_calculator.py","contains":["total([])","== 0"]}]},
+  {"id":"calc-008","description":"Add type annotations to the calculator add function.","checks":[{"path":"src/calculator.py","contains":["left: float","right: float","-> float"]}]},
+  {"id":"calc-009","description":"Add a docstring to the divide function.","checks":[{"path":"src/calculator.py","contains":["def divide","\"\"\""]}]},
+  {"id":"calc-010","description":"Add a test for adding zero.","checks":[{"path":"tests/test_calculator.py","contains":["add(",", 0)"]}]},
+  {"id":"calc-011","description":"Add a power function to the calculator.","checks":[{"path":"src/calculator.py","contains":["def power"]}]},
+  {"id":"calc-012","description":"Add a test for total with three integers.","checks":[{"path":"tests/test_calculator.py","contains":["total([1, 2, 3])"]}]},
+  {"id":"calc-013","description":"Add an explicit test for divide returning four.","checks":[{"path":"tests/test_calculator.py","contains":["divide(8, 2)","== 4"]}]},
+  {"id":"calc-014","description":"Add a calculator module-level description.","checks":[{"path":"src/calculator.py","contains":["calculator"]}]},
+  {"id":"calc-015","description":"Add a test for adding two positive values.","checks":[{"path":"tests/test_calculator.py","contains":["add(2, 3)","== 5"]}]}
+]

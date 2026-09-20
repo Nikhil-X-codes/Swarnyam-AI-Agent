@@ -108,22 +108,25 @@ def _write_usage(
         pass
 
 
-def _pace_groq_request() -> None:
-    """Stay within the configured rolling Groq request budget."""
+_pace_lock = threading.Lock()
 
+
+def _pace_groq_request() -> None:
+    """Stay within the configured rolling Groq request budget in a thread-safe manner."""
     global _last_request_at
     request_limit = int(_number_env("GROQ_REQUESTS_PER_MINUTE", 30))
+    min_interval = _number_env("GROQ_MIN_REQUEST_INTERVAL_SECONDS", 2.1)
     while True:
-        now = time.perf_counter()
-        _request_events[:] = [timestamp for timestamp in _request_events if now - timestamp < 60]
-        min_interval = _number_env("GROQ_MIN_REQUEST_INTERVAL_SECONDS", 2.1)
-        wait_for = max(0.0, min_interval - (now - _last_request_at))
-        if len(_request_events) >= request_limit:
-            wait_for = max(wait_for, 60 - (now - _request_events[0]))
-        if wait_for <= 0:
-            _last_request_at = time.perf_counter()
-            _request_events.append(_last_request_at)
-            return
+        with _pace_lock:
+            now = time.perf_counter()
+            _request_events[:] = [timestamp for timestamp in _request_events if now - timestamp < 60]
+            wait_for = max(0.0, min_interval - (now - _last_request_at))
+            if len(_request_events) >= request_limit:
+                wait_for = max(wait_for, 60 - (now - _request_events[0]))
+            if wait_for <= 0:
+                _last_request_at = time.perf_counter()
+                _request_events.append(_last_request_at)
+                return
         time.sleep(wait_for)
 
 
@@ -418,6 +421,34 @@ def _call_local_llama(
     )
 
 
+_global_groq_client: Groq | None = None
+_groq_client_lock = threading.Lock()
+
+
+def _get_groq_client(timeout: float) -> Groq:
+    """Get or create a reusable Groq client with connection pooling."""
+    global _global_groq_client
+    if _global_groq_client is None:
+        with _groq_client_lock:
+            if _global_groq_client is None:
+                _global_groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"), timeout=timeout)
+    return _global_groq_client
+
+
+def _close_groq_client() -> None:
+    """Cleanly close the global Groq client and its pooled SSL connections."""
+    global _global_groq_client
+    if _global_groq_client is not None:
+        try:
+            _global_groq_client.close()
+        except Exception:
+            pass
+        _global_groq_client = None
+
+
+atexit.register(_close_groq_client)
+
+
 def call_llm(
     prompt: str,
     system_prompt: str = "You are a helpful coding assistant.",
@@ -477,7 +508,7 @@ def call_llm(
             _write_usage(usage, prompt=prompt, response="", system_prompt=system_prompt, agent_name=eff_agent)
             raise LLMCallError(f"Local offline LLM call failed: {exc}") from exc
 
-    groq_client = client or Groq(api_key=os.getenv("GROQ_API_KEY"), timeout=timeout)
+    groq_client = client or _get_groq_client(timeout)
     attempts = 0
 
     try:
