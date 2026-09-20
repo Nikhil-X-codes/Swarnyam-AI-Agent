@@ -9,6 +9,9 @@ from typing import Any
 from rag.chunker import SUPPORTED_EXTENSIONS, chunk_file
 
 
+_EMBEDDER_CACHE: dict[str, Any] = {}
+
+
 class RepoIndexer:
     def __init__(self, db_path: str | Path, *, embedding_model: str = "all-MiniLM-L6-v2", embedder: Any | None = None):
         try:
@@ -19,6 +22,9 @@ class RepoIndexer:
 
         os.environ.setdefault("HF_HOME", str(Path.cwd() / "work" / "hf-cache"))
         os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+        os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
+        os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
+        os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
         try:
             import chromadb
         except ImportError as exc:
@@ -27,9 +33,13 @@ class RepoIndexer:
         self.db_path = Path(db_path)
         if embedder is not None:
             self.embedder = embedder
+        elif embedding_model in _EMBEDDER_CACHE:
+            self.embedder = _EMBEDDER_CACHE[embedding_model]
         else:
             try:
                 from sentence_transformers import SentenceTransformer
+                from transformers import logging as hf_logging
+                hf_logging.set_verbosity_error()
             except ImportError as exc:
                 raise RuntimeError("Phase 3 requires sentence-transformers") from exc
             
@@ -39,6 +49,7 @@ class RepoIndexer:
             local_only = os.getenv("OFFLINE_MODE", "false").lower() in ("true", "1") or cached_locally
 
             self.embedder = SentenceTransformer(embedding_model, device="cpu", local_files_only=local_only)
+            _EMBEDDER_CACHE[embedding_model] = self.embedder
         self.client = chromadb.PersistentClient(path=str(self.db_path), settings=chromadb.config.Settings(anonymized_telemetry=False))
         self.collection = self.client.get_or_create_collection("repo_code")
 

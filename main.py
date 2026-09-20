@@ -35,10 +35,11 @@ def build_parser() -> argparse.ArgumentParser:
     eval_parser = subparsers.add_parser("eval", help="Run the regression benchmark suite.")
     eval_parser.add_argument("--repo", default="workspace/target-repo")
     eval_parser.add_argument("--db", default="work/chroma-phase3")
-    eval_parser.add_argument("--max-attempts", type=int, default=2)
+    eval_parser.add_argument("--max-attempts", type=int, default=3)
     eval_parser.add_argument("--results-dir", default="eval/results")
     eval_parser.add_argument("--task-ids", nargs="*", help="Filter benchmark to specific task IDs")
     eval_parser.add_argument("--limit", type=int, help="Limit number of benchmark tasks to run")
+    eval_parser.add_argument("--tasks", help="Optional path to custom tasks JSON file.")
     eval_parser.add_argument("--offline", action="store_true", help="Force local fallback (llama.cpp) without external API calls.")
     cost_parser = subparsers.add_parser("cost-report", help="Show total spend, cost per agent role, and recent runs.")
     cost_parser.add_argument("--json", action="store_true", help="Output cost report as raw JSON.")
@@ -84,7 +85,7 @@ def main() -> int:
     elif args.command == "eval":
         from eval.runner import load_tasks, run_suite
 
-        tasks = load_tasks()
+        tasks = load_tasks(args.tasks) if getattr(args, "tasks", None) else load_tasks()
         if args.task_ids:
             tasks = [t for t in tasks if t.id in args.task_ids]
         if args.limit:
