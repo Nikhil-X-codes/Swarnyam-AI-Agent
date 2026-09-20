@@ -26,10 +26,10 @@ class CoderOutputError(ValueError):
 
 
 CODER_SYSTEM_PROMPT = """You are the Coder agent. Return only valid JSON with this shape:
-{"files":{"src/file.py":"complete new file content"},"summary":"...","confidence":0.0,"touched_files":["src/file.py"]}
+{"files":{"file.py":"complete new file content"},"summary":"...","confidence":0.0,"touched_files":["file.py"]}
 Return complete contents for every changed or new file in the files object.
-Use repository-relative POSIX paths. Put production changes and tests in the
-correct separate files. Preserve all existing behavior and existing tests unless
+Use exact repository-relative POSIX paths matching existing files or standard locations (do not invent nested directories like src/ if files are located at repository root).
+Put production changes and tests in the correct separate files. Preserve all existing behavior and existing tests unless
 the task explicitly asks for a behavior change. Treat every concrete noun,
 function name, argument, value, type annotation, and test assertion in the task
 as a required acceptance item. Before returning JSON, mentally check that every
@@ -100,9 +100,27 @@ def _generate_diff(files: dict[str, str], base_path: str | Path | None) -> str:
 
 
 def create_code_change(task: str, plan: Any, context: str = "", *, base_path: str | Path | None = None, max_retries: int = 2, llm: Any = call_llm) -> CoderOutput:
-    from memory.logger import set_agent_context
-    set_agent_context("coder")
+    try:
+        from memory.logger import set_agent_context
+        set_agent_context("coder")
+    except ImportError:
+        pass
     plan_data = plan.model_dump() if hasattr(plan, "model_dump") else plan
+
+    repo_files: list[str] = []
+    if base_path:
+        root = Path(base_path).resolve()
+        if root.is_dir():
+            for p in root.rglob("*"):
+                if p.is_file() and not any(part.startswith(".") or part in {"__pycache__", "work", "chroma_db"} for part in p.parts):
+                    try:
+                        repo_files.append(p.relative_to(root).as_posix())
+                    except ValueError:
+                        pass
+    files_info = ""
+    if repo_files:
+        files_info = f"\nExisting repository files:\n" + "\n".join(f"- {f}" for f in sorted(repo_files)) + "\n"
+
     base_prompt = (
         "Implement the task exactly, including all requested production changes "
         "and tests. Do not stop after making the code compile or after making "
@@ -112,6 +130,7 @@ def create_code_change(task: str, plan: Any, context: str = "", *, base_path: st
         "Required completion checklist: every detail in the Task and every "
         "acceptance criterion must be reflected in the returned files; preserve "
         "unrelated existing content; put tests under tests/.\n"
+        f"{files_info}"
         f"Repository context:\n{context}"
     )
     last_error = None
