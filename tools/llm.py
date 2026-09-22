@@ -19,7 +19,14 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from dotenv import load_dotenv
-from groq import APIConnectionError, APITimeoutError, Groq, RateLimitError
+from groq import (
+    APIConnectionError,
+    APIStatusError,
+    APITimeoutError,
+    Groq,
+    InternalServerError,
+    RateLimitError,
+)
 
 DEFAULT_MODEL = "openai/gpt-oss-120b"
 DEFAULT_TIMEOUT_SECONDS = 30.0
@@ -138,47 +145,69 @@ def _call_openrouter(
     timeout: float,
     max_output_tokens: int,
 ) -> tuple[str, int, int]:
-    """Call OpenRouter's OpenAI-compatible endpoint as a bounded fallback."""
+    """Call OpenRouter's OpenAI-compatible endpoint with automatic free-tier fallback."""
 
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
         raise LLMCallError("OPENROUTER_API_KEY is not configured")
-    payload = json.dumps({
-        "model": os.getenv("OPENROUTER_MODEL", model),
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt},
-        ],
-        "max_tokens": max_output_tokens,
-        "temperature": _number_env("LLM_TEMPERATURE", 0.0),
-    }).encode("utf-8")
-    request = Request(
-        os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1/chat/completions"),
-        data=payload,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": os.getenv("OPENROUTER_HTTP_REFERER", "http://localhost"),
-            "X-Title": "AI Coding Agent Swarm",
-        },
-        method="POST",
-    )
-    try:
-        with urlopen(request, timeout=timeout) as response:
-            data = json.loads(response.read().decode("utf-8"))
-    except HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")
-        if exc.code == 429 or exc.code >= 500:
-            raise APIConnectionError(f"OpenRouter transient HTTP {exc.code}: {detail}") from exc
-        raise LLMCallError(f"OpenRouter HTTP {exc.code}: {detail}") from exc
-    except URLError as exc:
-        raise APIConnectionError(f"OpenRouter connection failed: {exc}") from exc
-    choices = data.get("choices") or []
-    if not choices:
-        raise LLMCallError(f"OpenRouter returned no choices: {data}")
-    message = choices[0].get("message", {}).get("content") or ""
-    usage = data.get("usage") or {}
-    return message, int(usage.get("prompt_tokens", 0) or 0), int(usage.get("completion_tokens", 0) or 0)
+
+    primary_model = os.getenv("OPENROUTER_MODEL", model)
+    candidate_models = [primary_model]
+    for fallback in (
+        "meta-llama/llama-3.2-3b-instruct:free",
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "mistralai/mistral-7b-instruct:free",
+        "google/gemini-2.0-flash-exp:free",
+    ):
+        if fallback not in candidate_models:
+            candidate_models.append(fallback)
+
+    last_error: Exception | None = None
+    for candidate in candidate_models:
+        payload = json.dumps({
+            "model": candidate,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
+            ],
+            "max_tokens": max_output_tokens,
+            "temperature": _number_env("LLM_TEMPERATURE", 0.0),
+        }).encode("utf-8")
+        request = Request(
+            os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1/chat/completions"),
+            data=payload,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": os.getenv("OPENROUTER_HTTP_REFERER", "http://localhost"),
+                "X-Title": "AI Coding Agent Swarm",
+            },
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=timeout) as response:
+                data = json.loads(response.read().decode("utf-8"))
+            choices = data.get("choices") or []
+            if not choices:
+                continue
+            message = choices[0].get("message", {}).get("content") or ""
+            usage = data.get("usage") or {}
+            return message, int(usage.get("prompt_tokens", 0) or 0), int(usage.get("completion_tokens", 0) or 0)
+        except HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")
+            if exc.code in (404, 429) or exc.code >= 500:
+                last_error = APIConnectionError(f"OpenRouter transient HTTP {exc.code} for {candidate}: {detail}")
+                continue
+            raise LLMCallError(f"OpenRouter HTTP {exc.code}: {detail}") from exc
+        except URLError as exc:
+            raise APIConnectionError(f"OpenRouter connection failed: {exc}") from exc
+        except Exception as exc:
+            last_error = exc
+            continue
+
+    if last_error:
+        raise last_error
+    raise LLMCallError("OpenRouter failed across all candidate free models")
 
 
 _local_server_process: subprocess.Popen | None = None
@@ -215,6 +244,31 @@ def _is_server_healthy(url: str, timeout: float = 0.8) -> bool:
         return False
 
 
+def _resolve_local_model_path(model_path: Path | None = None) -> Path:
+    """Resolve explicit GGUF model path, or auto-discover available *.gguf models in models/."""
+    if model_path is not None and model_path.exists():
+        return model_path
+
+    env_path = os.getenv("LOCAL_MODEL_PATH")
+    if env_path:
+        p = Path(env_path)
+        if p.exists():
+            return p
+
+    default_path = Path("models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf")
+    if default_path.exists():
+        return default_path
+
+    # Auto-discovery fallback: scan models/ directory for any *.gguf files
+    models_dir = Path("models")
+    if models_dir.exists() and models_dir.is_dir():
+        gguf_candidates = sorted(models_dir.glob("*.gguf"))
+        if gguf_candidates:
+            return gguf_candidates[0]
+
+    raise LLMCallError(f"Local model not found. Checked default and found no *.gguf in {models_dir.resolve()}")
+
+
 def _ensure_local_server(timeout: float = 8.0) -> str:
     """Ensure local llama-server is running and return its chat completions endpoint."""
     global _local_server_process
@@ -222,9 +276,7 @@ def _ensure_local_server(timeout: float = 8.0) -> str:
     if _is_server_healthy(chat_url):
         return chat_url
 
-    model_path = Path(os.getenv("LOCAL_MODEL_PATH", "models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf"))
-    if not model_path.exists():
-        raise LLMCallError(f"Local model not found at {model_path}")
+    model_path = _resolve_local_model_path()
 
     server_bin = Path(os.getenv("LLAMA_SERVER_BIN", "models/bin/llama-server.exe"))
     if not server_bin.exists():
@@ -315,9 +367,7 @@ def get_local_model(model_path: Path | None = None) -> Any:
     if _local_llama_instance is None:
         with _local_llama_lock:
             if _local_llama_instance is None:
-                target_path = model_path or Path(os.getenv("LOCAL_MODEL_PATH", "models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf"))
-                if not target_path.exists():
-                    raise LLMCallError(f"Local model not found at {target_path}")
+                target_path = _resolve_local_model_path(model_path)
                 try:
                     from llama_cpp import Llama
 
@@ -344,9 +394,7 @@ def call_local_llm(
 ) -> tuple[str, int, int]:
     """Execute local LLM inference using a persistent llama-cpp instance,
     falling back to local server or CLI if needed."""
-    target_path = model_path or Path(os.getenv("LOCAL_MODEL_PATH", "models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf"))
-    if not target_path.exists():
-        raise LLMCallError(f"Local model not found at {target_path}")
+    target_path = _resolve_local_model_path(model_path)
 
     local_timeout = max(timeout, _number_env("LOCAL_LLM_TIMEOUT_SECONDS", 180.0))
 
@@ -482,6 +530,12 @@ def call_llm(
     max_output_tokens = int(_number_env("LLM_MAX_OUTPUT_TOKENS", 2040))
     local_timeout = max(timeout, _number_env("LOCAL_LLM_TIMEOUT_SECONDS", 180.0))
 
+    local_model_tag = "local:qwen2.5-coder-1.5b"
+    try:
+        local_model_tag = f"local:{_resolve_local_model_path().stem}"
+    except Exception:
+        pass
+
     # Explicit offline mode skips all remote APIs
     if is_offline:
         try:
@@ -489,7 +543,7 @@ def call_llm(
                 prompt, system_prompt, timeout=local_timeout, max_output_tokens=max_output_tokens,
             )
             usage = LLMUsage(
-                session_id, datetime.now(timezone.utc).isoformat(), "local:qwen2.5-coder-1.5b",
+                session_id, datetime.now(timezone.utc).isoformat(), local_model_tag,
                 len(prompt), len(message), input_tokens, output_tokens, 0.0,
                 round((time.perf_counter() - started) * 1000, 2), 1, "success",
                 backend="local",
@@ -499,7 +553,7 @@ def call_llm(
             return message, usage
         except Exception as exc:
             usage = LLMUsage(
-                session_id, datetime.now(timezone.utc).isoformat(), "local:qwen2.5-coder-1.5b",
+                session_id, datetime.now(timezone.utc).isoformat(), local_model_tag,
                 len(prompt), 0, 0, 0, 0.0,
                 round((time.perf_counter() - started) * 1000, 2), 1, "error", type(exc).__name__,
                 backend="local",
@@ -541,7 +595,12 @@ def call_llm(
                 )
                 _write_usage(usage, prompt=prompt, response=message, system_prompt=system_prompt, agent_name=eff_agent)
                 return message, usage
-            except (RateLimitError, APITimeoutError, APIConnectionError) as exc:
+            except (RateLimitError, APITimeoutError, APIConnectionError, InternalServerError, APIStatusError) as exc:
+                if isinstance(exc, APIStatusError) and not isinstance(exc, (RateLimitError, InternalServerError)):
+                    status_code = getattr(exc, "status_code", 0)
+                    if status_code != 429 and status_code < 500:
+                        raise LLMCallError(f"Groq API error ({status_code}): {exc}") from exc
+
                 if attempts > retries:
                     # Cascade 1: Try OpenRouter
                     openrouter_error = None
@@ -572,7 +631,7 @@ def call_llm(
                         )
                         usage = LLMUsage(
                             session_id, datetime.now(timezone.utc).isoformat(),
-                            "local:qwen2.5-coder-1.5b", len(prompt), len(message),
+                            local_model_tag, len(prompt), len(message),
                             input_tokens, output_tokens, 0.0,
                             round((time.perf_counter() - started) * 1000, 2), attempts, "success",
                             backend="local",
@@ -592,11 +651,13 @@ def call_llm(
             except Exception as exc:
                 raise LLMCallError(f"Groq call failed: {exc}") from exc
     except Exception as exc:
+        err_backend = "local" if is_offline else "groq"
+        err_model = local_model_tag if is_offline else selected_model
         usage = LLMUsage(
-            session_id, datetime.now(timezone.utc).isoformat(), selected_model,
+            session_id, datetime.now(timezone.utc).isoformat(), err_model,
             len(prompt), 0, 0, 0, 0.0,
             round((time.perf_counter() - started) * 1000, 2), attempts, "error", type(exc).__name__,
-            backend="groq",
+            backend=err_backend,
             agent_name=eff_agent,
         )
         _write_usage(usage, prompt=prompt, response="", system_prompt=system_prompt, agent_name=eff_agent)
