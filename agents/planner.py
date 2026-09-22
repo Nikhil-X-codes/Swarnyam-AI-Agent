@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 from pydantic import BaseModel, Field, ValidationError
@@ -29,11 +30,24 @@ or explanatory text outside the JSON object."""
 def _parse_plan(raw: str) -> Plan:
     candidate = raw.strip()
     if candidate.startswith("```"):
-        candidate = candidate.removeprefix("```").removeprefix("json").removesuffix("```").strip()
+        candidate = re.sub(r"^```(?:json)?\s*", "", candidate)
+        candidate = re.sub(r"\s*```$", "", candidate).strip()
+
+    # 1. Direct JSON parse
     try:
         return Plan.model_validate(json.loads(candidate))
-    except (json.JSONDecodeError, ValidationError, TypeError) as exc:
-        raise PlannerOutputError(f"Planner returned invalid JSON: {exc}") from exc
+    except Exception:
+        pass
+
+    # 2. Tolerant JSON block extraction across conversational prose
+    json_match = re.search(r"(\{[\s\S]*\})", candidate)
+    if json_match:
+        try:
+            return Plan.model_validate(json.loads(json_match.group(1)))
+        except (json.JSONDecodeError, ValidationError, TypeError):
+            pass
+
+    raise PlannerOutputError(f"Planner returned invalid JSON: {raw[:200]}")
 
 
 def create_plan(task: str, *, max_retries: int = 3, llm: Any = call_llm) -> Plan:

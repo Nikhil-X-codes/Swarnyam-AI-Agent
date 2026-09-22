@@ -6,7 +6,7 @@ tree-sitter-language-pack  # Python 3.13-compatible replacement
 pydantic
 pytest
 ruff
-duckduckgo-search
+ddgs
 unidiff
 click
 python-dotenv

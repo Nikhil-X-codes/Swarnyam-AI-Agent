@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import difflib
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -48,9 +49,21 @@ unified diff deterministically."""
 def _parse_files(raw: str) -> tuple[dict[str, str], str, float, list[str]]:
     value = raw.strip()
     if value.startswith("```"):
-        value = value.removeprefix("```").removeprefix("json").removesuffix("```").strip()
+        value = re.sub(r"^```(?:json)?\s*", "", value)
+        value = re.sub(r"\s*```$", "", value).strip()
     try:
         data = json.loads(value)
+    except Exception:
+        match = re.search(r"(\{[\s\S]*\})", value)
+        if match:
+            try:
+                data = json.loads(match.group(1))
+            except Exception as exc:
+                raise CoderOutputError(f"Coder returned invalid file JSON: {exc}") from exc
+        else:
+            raise CoderOutputError(f"Coder returned invalid file JSON: {raw[:200]}")
+
+    try:
         files = data["files"]
         summary = data["summary"]
         confidence = data["confidence"]
@@ -64,7 +77,7 @@ def _parse_files(raw: str) -> tuple[dict[str, str], str, float, list[str]]:
         if not isinstance(touched_files, list) or set(touched_files) != set(files):
             raise CoderOutputError("touched_files must exactly match files keys")
         return files, summary, confidence, touched_files
-    except (json.JSONDecodeError, KeyError, TypeError) as exc:
+    except (KeyError, TypeError) as exc:
         raise CoderOutputError(f"Coder returned invalid file JSON: {exc}") from exc
 
 
