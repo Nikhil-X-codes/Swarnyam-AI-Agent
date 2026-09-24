@@ -1,0 +1,1563 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Swarnyam — Production-grade Multi-Agent AI Coding Swarm with Parallel Context, RAG, Self-Correction, and Offline LLM Fallback.">
+      
+      
+        <meta name="author" content="Nikhil Nagar">
+      
+      
+        <link rel="canonical" href="https://nikhil-x-codes.github.io/Swarnyam-AI-Agent/phase_7_architecture/">
+      
+      
+        <link rel="prev" href="../phase_6_architecture/">
+      
+      
+        <link rel="next" href="../phase_8_architecture/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Phase 7 — Local Fallback (llama.cpp) - Swarnyam AI Agent</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#phase-7-local-fallback-llamacpp-multi-tier-fallback-chain" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Swarnyam AI Agent" class="md-header__button md-logo" aria-label="Swarnyam AI Agent" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Swarnyam AI Agent
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Phase 7 — Local Fallback (llama.cpp)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="cyan"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Nikhil-X-codes/Swarnyam-AI-Agent" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Nikhil-X-codes/Swarnyam-AI-Agent
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href=".." class="md-tabs__link">
+          
+  
+  
+    
+  
+  Overview
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../cli-reference/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CLI Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../config/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../phase_1_architecture/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture & Phases
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Swarnyam AI Agent" class="md-nav__button md-logo" aria-label="Swarnyam AI Agent" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Swarnyam AI Agent
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Nikhil-X-codes/Swarnyam-AI-Agent" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Nikhil-X-codes/Swarnyam-AI-Agent
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href=".." class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1" id="__nav_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Overview
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture & Phases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture & Phases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase_1_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 1 — LLM Connection & Cost Tracking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase_2_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 2 — Single Agent Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase_3_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 3 — RAG & ChromaDB Indexer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase_4_and_4_5_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 4 & 4.5 — Coder, Reviewer & Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase_5_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 5 — Debugger & Self-Correction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase_6_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 6 — Parallel Context (Researcher & Architect)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 7 — Local Fallback (llama.cpp)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 7 — Local Fallback (llama.cpp)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#executive-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Executive Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fallback-sequence-state-transition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fallback Sequence &amp; State Transition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-components-deep-dive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Components Deep Dive
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Components Deep Dive">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-the-multi-tier-fallback-cascade-toolsllmpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The Multi-Tier Fallback Cascade (tools/llm.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-in-process-local-inference-singleton-cache-get_local_model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. In-Process Local Inference &amp; Singleton Cache (get_local_model)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. In-Process Local Inference &amp; Singleton Cache (get_local_model)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#supported-execution-modes-for-local-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Execution Modes for Local Inference:
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-graceful-subsystem-offline-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Graceful Subsystem Offline Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fallback-tier-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fallback Tier Comparison
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-configuration-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI &amp; Configuration Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CLI &amp; Configuration Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#environment-variables-env" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Variables (.env)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-commands-with-offline-toggle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Commands with Offline Toggle
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification-test-suite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification &amp; Test Suite
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase_8_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 8 — Observability & Run Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase_9_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 9 — Docker Containerization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#executive-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Executive Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fallback-sequence-state-transition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fallback Sequence &amp; State Transition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-components-deep-dive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Components Deep Dive
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Components Deep Dive">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-the-multi-tier-fallback-cascade-toolsllmpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The Multi-Tier Fallback Cascade (tools/llm.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-in-process-local-inference-singleton-cache-get_local_model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. In-Process Local Inference &amp; Singleton Cache (get_local_model)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. In-Process Local Inference &amp; Singleton Cache (get_local_model)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#supported-execution-modes-for-local-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Execution Modes for Local Inference:
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-graceful-subsystem-offline-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Graceful Subsystem Offline Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fallback-tier-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fallback Tier Comparison
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-configuration-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI &amp; Configuration Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CLI &amp; Configuration Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#environment-variables-env" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Variables (.env)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-commands-with-offline-toggle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Commands with Offline Toggle
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification-test-suite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification &amp; Test Suite
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="phase-7-local-fallback-llamacpp-multi-tier-fallback-chain">Phase 7: Local Fallback (llama.cpp) &amp; Multi-Tier Fallback Chain<a class="headerlink" href="#phase-7-local-fallback-llamacpp-multi-tier-fallback-chain" title="Permanent link">&para;</a></h1>
+<p>This document provides a comprehensive architectural and operational breakdown of <strong>Phase 7</strong> of the multi-agent AI coding swarm.</p>
+<hr />
+<h2 id="executive-summary">Executive Summary<a class="headerlink" href="#executive-summary" title="Permanent link">&para;</a></h2>
+<p>A multi-agent coding swarm relies heavily on continuous LLM interactions across Planner, Context, Coder, Reviewer, and Debugger agents. If inference depends solely on a single hosted free API (e.g. Groq), temporary provider rate limits (HTTP 429), connection timeouts, or service outages will abort the entire pipeline mid-run. Conversely, defaulting entirely to a small local model degrades reasoning quality and speed.</p>
+<p><strong>Phase 7 solves this resilience problem by implementing a graceful 3-tier fallback chain:</strong>
+1. <strong>Tier 1 (Primary):</strong> Hosted Groq API (<code>openai/gpt-oss-120b</code> or configured primary model) with adaptive rate pacing and exponential jittered backoff.
+2. <strong>Tier 2 (Secondary Remote):</strong> OpenRouter free tier (<code>meta-llama/llama-3.2-3b-instruct:free</code>) as an immediate remote safety net when Groq is throttled or down.
+3. <strong>Tier 3 (Local Offline):</strong> Local CPU inference via <code>llama.cpp</code> using a quantized GGUF model (<code>Qwen2.5-Coder-1.5B-Instruct-GGUF</code>), running completely offline with zero network dependency.
+4. <strong>Explicit Offline Mode (<code>--offline</code>):</strong> Bypasses all remote networks completely for air-gapped environments or local testing.
+5. <strong>In-Memory Model Singleton:</strong> Loads local GGUF model weights into RAM once globally and reuses them across calls to eliminate multi-second initialization overhead.
+6. <strong>Backend Observability:</strong> Logs the exact backend used (<code>"groq"</code>, <code>"openrouter"</code>, or <code>"local"</code>) into SQLite for accurate cost tracking and failure auditing.</p>
+<hr />
+<h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>graph TB
+    Start(["Agent Invocation&lt;br/&gt;&lt;code&gt;call_llm(prompt, system_prompt)&lt;/code&gt;"]) --&gt; CheckOffline{"Offline Mode Requested?&lt;br/&gt;(&lt;code&gt;--offline&lt;/code&gt; or &lt;code&gt;OFFLINE_MODE=true&lt;/code&gt;)"}
+
+    %% Offline Path
+    CheckOffline -- "Yes (Forced Offline)" --&gt; LocalDirect["Direct Local Inference&lt;br/&gt;&lt;code&gt;call_local_llm()&lt;/code&gt;"]
+
+    %% Primary Online Flow
+    CheckOffline -- "No (Online Flow)" --&gt; Tier1["Tier 1: Primary API (Groq)&lt;br/&gt;&lt;code&gt;openai/gpt-oss-120b&lt;/code&gt;"]
+    Tier1 --&gt; GroqAttempt{"Groq Request Succeeded?"}
+
+    GroqAttempt -- "Success" --&gt; LogGroq["Log Backend: 'groq'&lt;br/&gt;Calculate Groq Token Costs"]
+
+    GroqAttempt -- "429 RateLimit / Timeout" --&gt; BackoffCheck{"Attempts &lt;= Max Retries?&lt;br/&gt;(Default: 3)"}
+    BackoffCheck -- "Yes" --&gt; WaitJitter["Exponential Backoff + Jitter&lt;br/&gt;&lt;code&gt;time.sleep(delay)&lt;/code&gt;"]
+    WaitJitter --&gt; Tier1
+
+    %% Fallback Cascade 1: OpenRouter
+    BackoffCheck -- "Retries Exceeded" --&gt; Tier2["Tier 2: Remote Fallback (OpenRouter)&lt;br/&gt;&lt;code&gt;meta-llama/llama-3.2-3b-instruct:free&lt;/code&gt;"]
+    Tier2 --&gt; OpenRouterAttempt{"OpenRouter Succeeded?"}
+    OpenRouterAttempt -- "Success" --&gt; LogOpenRouter["Log Backend: 'openrouter'&lt;br/&gt;Calculate OpenRouter Costs"]
+
+    %% Fallback Cascade 2: Local llama.cpp
+    OpenRouterAttempt -- "Failed / No Key" --&gt; Tier3["Tier 3: Local Fallback (llama.cpp)&lt;br/&gt;&lt;code&gt;Qwen2.5-Coder-1.5B-Instruct-GGUF&lt;/code&gt;"]
+    Tier3 --&gt; LocalDirect
+
+    LocalDirect --&gt; LocalSingleton{"Model in RAM?&lt;br/&gt;(&lt;code&gt;get_local_model&lt;/code&gt;)"}
+    LocalSingleton -- "No" --&gt; LoadGGUF["Load GGUF Model into RAM&lt;br/&gt;(CPU Threads: max 8)"]
+    LocalSingleton -- "Yes" --&gt; RunInference["Execute In-Process Inference&lt;br/&gt;&lt;code&gt;model.create_chat_completion&lt;/code&gt;"]
+    LoadGGUF --&gt; RunInference
+
+    RunInference --&gt; LocalSuccess{"Inference Succeeded?"}
+    LocalSuccess -- "Success" --&gt; LogLocal["Log Backend: 'local'&lt;br/&gt;Token Cost = $0.00"]
+    LocalSuccess -- "Failed" --&gt; FatalFail(["Raise LLMCallError&lt;br/&gt;'All backends in fallback chain failed'"])
+
+    LogGroq --&gt; Return(["Return Response &amp; Usage"])
+    LogOpenRouter --&gt; Return
+    LogLocal --&gt; Return
+
+    classDef start fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b;
+    classDef tier1 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20;
+    classDef tier2 fill:#fff8e1,stroke:#f57f17,stroke-width:2px,color:#e65100;
+    classDef tier3 fill:#ede7f6,stroke:#512da8,stroke-width:2px,color:#311b92;
+    classDef fail fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#b71c1c;
+
+    class Start,Return start;
+    class Tier1,LogGroq tier1;
+    class Tier2,LogOpenRouter tier2;
+    class Tier3,LocalDirect,LocalSingleton,LoadGGUF,RunInference,LogLocal tier3;
+    class FatalFail fail;</code></pre>
+<hr />
+<h2 id="fallback-sequence-state-transition">Fallback Sequence &amp; State Transition<a class="headerlink" href="#fallback-sequence-state-transition" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>sequenceDiagram
+    autonumber
+    participant Agent as Agent (Coder/Planner/Reviewer)
+    participant Core as LLM Wrapper (tools/llm.py: call_llm)
+    participant Groq as Tier 1: Groq API
+    participant OR as Tier 2: OpenRouter Free API
+    participant Llama as Tier 3: Local llama.cpp (CPU)
+    participant DB as SQLite Logger (memory/logger.py)
+
+    Agent-&gt;&gt;Core: call_llm(prompt, system_prompt)
+
+    alt Offline Mode Active (--offline or OFFLINE_MODE=true)
+        Core-&gt;&gt;Llama: call_local_llm(prompt)
+        Llama--&gt;&gt;Core: response (local tokens)
+        Core-&gt;&gt;DB: write_usage(backend="local", cost=0.0)
+        Core--&gt;&gt;Agent: (response, usage)
+    else Online Fallback Cascade
+        Core-&gt;&gt;Groq: chat.completions.create(...)
+        alt Groq Returns 200 OK
+            Groq--&gt;&gt;Core: 200 OK response
+            Core-&gt;&gt;DB: write_usage(backend="groq", cost=tokens*rate)
+            Core--&gt;&gt;Agent: (response, usage)
+        else Groq Rate Limited (429) / Network Timeout
+            Note over Core,Groq: Retry loop exhausted after exponential backoff
+            Core-&gt;&gt;OR: Fallback Cascade 1: _call_openrouter(...)
+            alt OpenRouter Returns 200 OK
+                OR--&gt;&gt;Core: 200 OK response
+                Core-&gt;&gt;DB: write_usage(backend="openrouter", cost=tokens*rate)
+                Core--&gt;&gt;Agent: (response, usage)
+            else OpenRouter Down / Quota Depleted
+                Core-&gt;&gt;Llama: Fallback Cascade 2: call_local_llm(...)
+                Llama--&gt;&gt;Core: response (local CPU inference)
+                Core-&gt;&gt;DB: write_usage(backend="local", cost=0.0)
+                Core--&gt;&gt;Agent: (response, usage)
+            end
+        end
+    end</code></pre>
+<hr />
+<h2 id="core-components-deep-dive">Core Components Deep Dive<a class="headerlink" href="#core-components-deep-dive" title="Permanent link">&para;</a></h2>
+<h3 id="1-the-multi-tier-fallback-cascade-toolsllmpy">1. The Multi-Tier Fallback Cascade (<code>tools/llm.py</code>)<a class="headerlink" href="#1-the-multi-tier-fallback-cascade-toolsllmpy" title="Permanent link">&para;</a></h3>
+<p>The primary entrypoint for all agent calls is <a href="file:///d:/Projects/Swarm Agent/tools/llm.py#L452"><code>call_llm()</code></a>. It manages rate limits and failovers transparently:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># tools/llm.py</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">call_llm</span><span class="p">(</span><span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">system_prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">offline</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="c1"># 1. Offline Short-Circuit</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="k">if</span> <span class="n">is_offline</span><span class="p">:</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        <span class="k">return</span> <span class="n">_call_local_llama</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="c1"># 2. Tier 1: Groq with Exponential Backoff</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="k">try</span><span class="p">:</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        <span class="n">response</span> <span class="o">=</span> <span class="n">groq_client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="k">return</span> <span class="n">message</span><span class="p">,</span> <span class="n">usage</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">"groq"</span><span class="p">)</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="k">except</span> <span class="p">(</span><span class="n">RateLimitError</span><span class="p">,</span> <span class="n">APITimeoutError</span><span class="p">,</span> <span class="n">APIConnectionError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>        <span class="k">if</span> <span class="n">attempts</span> <span class="o">&gt;</span> <span class="n">retries</span><span class="p">:</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>            <span class="c1"># 3. Tier 2: OpenRouter Fallback</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"OPENROUTER_API_KEY"</span><span class="p">):</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>                <span class="k">try</span><span class="p">:</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>                    <span class="k">return</span> <span class="n">_call_openrouter</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="n">usage</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">"openrouter"</span><span class="p">)</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>                    <span class="k">pass</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>            <span class="c1"># 4. Tier 3: Local llama.cpp Fallback</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>            <span class="k">try</span><span class="p">:</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>                <span class="k">return</span> <span class="n">_call_local_llama</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="n">usage</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">"local"</span><span class="p">)</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>                <span class="k">raise</span> <span class="n">LLMCallError</span><span class="p">(</span><span class="s2">"All backends in fallback chain failed"</span><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="2-in-process-local-inference-singleton-cache-get_local_model">2. In-Process Local Inference &amp; Singleton Cache (<code>get_local_model</code>)<a class="headerlink" href="#2-in-process-local-inference-singleton-cache-get_local_model" title="Permanent link">&para;</a></h3>
+<p>Reloading a ~1.5 GB GGUF model into memory takes 2–5 seconds per call. To prevent massive performance degradation during local fallback, <a href="file:///d:/Projects/Swarm Agent/tools/llm.py#L312"><code>get_local_model()</code></a> maintains a thread-safe global singleton:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># tools/llm.py</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">_local_llama_instance</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">_local_llama_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_local_model</span><span class="p">(</span><span class="n">model_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="k">global</span> <span class="n">_local_llama_instance</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="k">if</span> <span class="n">_local_llama_instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="k">with</span> <span class="n">_local_llama_lock</span><span class="p">:</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>            <span class="k">if</span> <span class="n">_local_llama_instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>                <span class="kn">from</span><span class="w"> </span><span class="nn">llama_cpp</span><span class="w"> </span><span class="kn">import</span> <span class="n">Llama</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>                <span class="n">_local_llama_instance</span> <span class="o">=</span> <span class="n">Llama</span><span class="p">(</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>                    <span class="n">model_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">target_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()),</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>                    <span class="n">n_ctx</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>                    <span class="n">n_threads</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">)),</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>                    <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>                <span class="p">)</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    <span class="k">return</span> <span class="n">_local_llama_instance</span>
+</span></code></pre></div>
+<h4 id="supported-execution-modes-for-local-inference">Supported Execution Modes for Local Inference:<a class="headerlink" href="#supported-execution-modes-for-local-inference" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Primary Path (<code>llama_cpp.Llama</code>):</strong> In-process Python bindings directly calling <code>llama.cpp</code> shared libraries.</li>
+<li><strong>Secondary Path (<code>LOCAL_LLM_URL</code>):</strong> Local OpenAI-compatible server (e.g., <code>llama-server</code> or <code>ollama</code>) if running as an external daemon.</li>
+<li><strong>Tertiary Path (<code>LLAMA_CPP_BIN</code>):</strong> Standalone <code>llama-cli.exe</code> executable invoking temporary prompt files if Python bindings are unavailable.</li>
+</ul>
+<h3 id="3-graceful-subsystem-offline-handling">3. Graceful Subsystem Offline Handling<a class="headerlink" href="#3-graceful-subsystem-offline-handling" title="Permanent link">&para;</a></h3>
+<p>When offline mode is active (<code>--offline</code> or <code>OFFLINE_MODE=true</code>), peripheral subsystems adjust automatically:
+* <strong>Researcher Agent (<a href="file:///d:/Projects/Swarm Agent/agents/researcher.py#L24">agents/researcher.py</a>):</strong> Skips external web queries via DuckDuckGo and returns safe fallback notes without crashing.
+* <strong>Repo Indexer (<a href="file:///d:/Projects/Swarm Agent/rag/indexer.py#L49">rag/indexer.py</a>):</strong> Uses local disk caches for <code>sentence-transformers</code> embeddings and sets <code>HF_HUB_OFFLINE=1</code> / <code>TRANSFORMERS_OFFLINE=1</code> to prevent Hugging Face network requests.</p>
+<hr />
+<h2 id="fallback-tier-comparison">Fallback Tier Comparison<a class="headerlink" href="#fallback-tier-comparison" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Backend</th>
+<th>Typical Latency</th>
+<th>Cost per 1K Tokens</th>
+<th>Dependencies</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tier 1</strong></td>
+<td><strong>Groq</strong> (<code>gpt-oss-120b</code>)</td>
+<td>~0.5s – 1.5s</td>
+<td>Free / Minimal API cost</td>
+<td>Internet + <code>GROQ_API_KEY</code></td>
+<td>Default fast execution</td>
+</tr>
+<tr>
+<td><strong>Tier 2</strong></td>
+<td><strong>OpenRouter</strong> (<code>llama-3.2-3b:free</code>)</td>
+<td>~2.0s – 5.0s</td>
+<td>$0.00 (Free tier)</td>
+<td>Internet + <code>OPENROUTER_API_KEY</code></td>
+<td>Rate limit safety net</td>
+</tr>
+<tr>
+<td><strong>Tier 3</strong></td>
+<td><strong>llama.cpp</strong> (<code>qwen2.5-coder-1.5b</code>)</td>
+<td>~5.0s – 15.0s (CPU)</td>
+<td>$0.00 (Local CPU)</td>
+<td>Local GGUF file + RAM</td>
+<td>Offline / Air-gapped / Total outage</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="cli-configuration-reference">CLI &amp; Configuration Reference<a class="headerlink" href="#cli-configuration-reference" title="Permanent link">&para;</a></h2>
+<h3 id="environment-variables-env">Environment Variables (<code>.env</code>)<a class="headerlink" href="#environment-variables-env" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Tier 1 (Groq)</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nv">GROQ_API_KEY</span><span class="o">=</span>gsk_...
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nv">GROQ_MODEL</span><span class="o">=</span>openai/gpt-oss-120b
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># Tier 2 (OpenRouter Fallback)</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nv">OPENROUTER_API_KEY</span><span class="o">=</span>sk-or-v1-...
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="nv">OPENROUTER_MODEL</span><span class="o">=</span>meta-llama/llama-3.2-3b-instruct:free
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="c1"># Tier 3 (Local llama.cpp)</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="nv">OFFLINE_MODE</span><span class="o">=</span><span class="nb">false</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="nv">LOCAL_MODEL_PATH</span><span class="o">=</span>models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="nv">LOCAL_LLM_TIMEOUT_SECONDS</span><span class="o">=</span><span class="m">180</span>.0
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="nv">LOCAL_LLM_CTX</span><span class="o">=</span><span class="m">4096</span>
+</span></code></pre></div>
+<h3 id="cli-commands-with-offline-toggle">CLI Commands with Offline Toggle<a class="headerlink" href="#cli-commands-with-offline-toggle" title="Permanent link">&para;</a></h3>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c"># Force offline execution across agents</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">python</span> <span class="n">main</span><span class="p">.</span><span class="n">py</span> <span class="n">plan</span> <span class="s2">"Create a binary search utility"</span> <span class="p">-</span><span class="n">-offline</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c"># Execute end-to-end solve using only local fallback</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">python</span> <span class="n">main</span><span class="p">.</span><span class="n">py</span> <span class="n">solve</span> <span class="s2">"Fix off-by-one error in pager"</span> <span class="p">-</span><span class="n">-repo</span> <span class="p">/</span><span class="n">path</span><span class="p">/</span><span class="n">to</span><span class="p">/</span><span class="n">repo</span> <span class="p">-</span><span class="n">-offline</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c"># Check which backend was recorded in SQLite</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">python</span> <span class="n">main</span><span class="p">.</span><span class="n">py</span> <span class="n">last-run</span> <span class="p">-</span><span class="n">-json</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="n">python</span> <span class="n">main</span><span class="p">.</span><span class="n">py</span> <span class="n">cost-report</span>
+</span></code></pre></div>
+<hr />
+<h2 id="verification-test-suite">Verification &amp; Test Suite<a class="headerlink" href="#verification-test-suite" title="Permanent link">&para;</a></h2>
+<p>Phase 7 features are validated in <a href="file:///d:/Projects/Swarm Agent/tests/test_phase7.py">tests/test_phase7.py</a>:
+* <code>test_call_llm_groq_success</code>: Confirms Tier 1 works on nominal paths.
+* <code>test_call_llm_falls_back_to_openrouter</code>: Simulates Groq rate limit (HTTP 429) and verifies automatic handoff to OpenRouter.
+* <code>test_call_llm_falls_back_to_local_when_all_remote_fail</code>: Simulates Groq and OpenRouter failures, verifying clean degradation to local llama.cpp.
+* <code>test_offline_mode_forces_local_backend</code>: Verifies <code>--offline</code> skips remote APIs entirely.
+* <code>test_call_local_llm_uses_in_process_model</code>: Tests global model caching via <code>get_local_model()</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.indexes", "content.code.copy", "content.code.annotate", "content.tabs.link", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
