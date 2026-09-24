@@ -1,0 +1,46 @@
+# Host virtual environments
+.venv/
+venv/
+env/
+
+# Version control
+.git/
+.gitignore
+
+# Secrets and local environments (passed via --env-file at runtime)
+.env
+.env.*
+!.env.example
+
+# Local models and large binaries (mounted via volume, never baked into image)
+models/*.gguf
+models/*.bin
+models/bin/
+*.zip
+
+# Local sandboxes and target workspaces (isolated inside container at runtime)
+work/
+workspace/
+
+# Generated artifacts and telemetry (mounted via volumes)
+outputs/
+memory/swarm_log.db
+memory/*.jsonl
+*.db
+*.sqlite3
+
+# Python byte-code and caches
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Editor and OS metadata
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

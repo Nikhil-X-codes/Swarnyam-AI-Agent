@@ -96,6 +96,8 @@ def solve_task(
         os.environ["HF_HUB_OFFLINE"] = "1"
         os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
+    eff_work_root = Path(os.getenv("SWARM_WORK_ROOT", str(work_root)))
+
     logger = SwarmLogger.get_instance() if SwarmLogger is not None else None
     run_id = logger.start_run("solve", task, str(repo)) if logger is not None else None
 
@@ -171,13 +173,13 @@ def solve_task(
         )
         context = design_context.as_prompt_context()
 
-        sandbox = create_sandbox(repo, Path(work_root) / "active")
+        sandbox = create_sandbox(repo, eff_work_root / "active")
         feedback = ""
 
         # 3. Coder -> Guardrails -> Reviewer -> Debugger Loop
         for attempt in range(1, max_attempts + 1):
             if attempt > 1:
-                sandbox = create_sandbox(repo, Path(work_root) / "active")
+                sandbox = create_sandbox(repo, eff_work_root / "active")
             retries = 2 if coder_retries is None else max(0, coder_retries)
             coder = create_code_change(
                 task,

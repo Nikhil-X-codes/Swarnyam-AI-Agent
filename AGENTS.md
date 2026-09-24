@@ -16,9 +16,9 @@ A multi-agent AI coding system (an "agent swarm") that takes a coding task + a t
 
 > Update this section every time a phase is completed or started. An agent should never have to grep commit history to figure out where the project actually is.
 
-- **Current phase:** Phase 9 — Docker Containerization
-- **Last completed phase:** Phase 8 — Logging, Observability & Structured Run Reports (SQLite schema in memory/logger.py, SwarmLogger auto-logging wrapper in tools/llm.py with agent context, standalone Markdown reports in memory/report.py, main.py cost-report & last-run CLI commands, failure reconstruction verified, 40/40 tests passing)
-- **Known broken / in-progress:** Phase 9 Docker containerization pending
+- **Current phase:** Phase 10 — Latency, Response Quality & Pipeline Optimization
+- **Last completed phase:** Phase 9 — Docker Containerization (Dockerfile with CPU-only PyTorch, docker-compose.yml, volume isolation for target repos/models, internal sandbox routing via SWARM_WORK_ROOT, 5/5 Phase 9 unit tests passing, production documentation in docs/ and README.md)
+- **Known broken / in-progress:** None. Swarnyam container and host workflows tested end-to-end.
 
 Do not start work on a phase later than the current one. Phases build on each other in order — see the build doc for why (e.g. the eval harness in Phase 4.5 assumes a working Coder→Reviewer loop from Phase 4; don't build it early with nothing real to test).
 

@@ -1,0 +1,24 @@
+services:
+  swarm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: swarm-agent:latest
+    container_name: swarm-agent
+    env_file:
+      - .env
+    environment:
+      - SWARM_DB_PATH=/app/memory/swarm_log.db
+      - SWARM_WORK_ROOT=/app/work/sandboxes
+      - LOCAL_MODEL_PATH=/app/models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
+    volumes:
+      # Target repository mounted as volume (not baked into image)
+      - ./workspace/sample-calc:/workspace/target-repo
+      # GGUF models mounted as read-only volume (not baked into image)
+      - ./models:/app/models:ro
+      # Markdown run reports written back to host outputs
+      - ./outputs:/app/outputs
+      # Persistent SQLite execution and cost logs
+      - ./memory:/app/memory
+    # The sandbox workspace (/app/work/sandboxes) remains internal to container
+    command: ["plan", "Add a power function in src/calc.py"]

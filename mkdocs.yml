@@ -1,0 +1,77 @@
+site_name: Swarnyam AI Agent
+site_description: Swarnyam — Production-grade Multi-Agent AI Coding Swarm with Parallel Context, RAG, Self-Correction, and Offline LLM Fallback.
+site_author: Nikhil Nagar
+repo_name: Nikhil-X-codes/Swarnyam-AI-Agent
+repo_url: https://github.com/Nikhil-X-codes/Swarnyam-AI-Agent
+site_url: https://nikhil-x-codes.github.io/Swarnyam-AI-Agent/
+
+theme:
+  name: material
+  language: en
+  palette:
+    # Slate dark mode by default
+    - scheme: slate
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+    # Light mode toggle
+    - scheme: default
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - search.suggest
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Overview:
+      - Home: index.md
+      - Docker Guide: docker.md
+  - CLI Reference: cli-reference.md
+  - Configuration: config.md
+  - Architecture & Phases:
+      - Phase 1 — LLM Connection & Cost Tracking: phase_1_architecture.md
+      - Phase 2 — Single Agent Bootstrap: phase_2_architecture.md
+      - Phase 3 — RAG & ChromaDB Indexer: phase_3_architecture.md
+      - Phase 4 & 4.5 — Coder, Reviewer & Eval: phase_4_and_4_5_architecture.md
+      - Phase 5 — Debugger & Self-Correction: phase_5_architecture.md
+      - Phase 6 — Parallel Context (Researcher & Architect): phase_6_architecture.md
+      - Phase 7 — Local Fallback (llama.cpp): phase_7_architecture.md
+      - Phase 8 — Observability & Run Reports: phase_8_architecture.md
+      - Phase 9 — Docker Containerization: phase_9_architecture.md

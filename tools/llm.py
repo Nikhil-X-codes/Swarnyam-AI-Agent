@@ -527,7 +527,7 @@ def call_llm(
     base_backoff = _number_env("LLM_BASE_BACKOFF_SECONDS", DEFAULT_BASE_BACKOFF_SECONDS)
     started = time.perf_counter()
     session_id = str(uuid.uuid4())
-    max_output_tokens = int(_number_env("LLM_MAX_OUTPUT_TOKENS", 2040))
+    max_output_tokens = int(_number_env("LLM_MAX_OUTPUT_TOKENS", 4096))
     local_timeout = max(timeout, _number_env("LOCAL_LLM_TIMEOUT_SECONDS", 180.0))
 
     local_model_tag = "local:qwen2.5-coder-1.5b"

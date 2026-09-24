@@ -7,6 +7,7 @@ CLI surface.
 
 import argparse
 import json
+import os
 
 from agents.planner import create_plan
 
@@ -32,6 +33,7 @@ def build_parser() -> argparse.ArgumentParser:
     solve_parser.add_argument("--confidence-threshold", type=float, default=0.7)
     solve_parser.add_argument("--sequential-context", action="store_true", help="Run context agents sequentially instead of in parallel.")
     solve_parser.add_argument("--offline", action="store_true", help="Force local fallback (llama.cpp) without external API calls.")
+    solve_parser.add_argument("--work-root", default=os.getenv("SWARM_WORK_ROOT", "work/sandboxes"), help="Directory for internal sandbox workspaces.")
     eval_parser = subparsers.add_parser("eval", help="Run the regression benchmark suite.")
     eval_parser.add_argument("--repo", default="workspace/target-repo")
     eval_parser.add_argument("--db", default="work/chroma-phase3")
@@ -79,6 +81,7 @@ def main() -> int:
             confidence_threshold=args.confidence_threshold,
             parallel_context=not args.sequential_context,
             offline=args.offline,
+            work_root=args.work_root,
         )
         print(json.dumps(result.as_dict(), indent=2, default=str))
         return 0 if result.status in {"success", "human_review"} else 1

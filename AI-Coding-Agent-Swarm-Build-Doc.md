@@ -1,10 +1,10 @@
-# AI Coding Agent Swarm — Build Documentation (Final, Merged)
+# Swarnyam AI Coding Agent Swarm — Build Documentation (Final, Merged)
 
-A phase-by-phase roadmap to build a production-aware multi-agent AI coding system using a hosted free API (Groq) as primary inference, with local llama.cpp as an offline fallback — no GPU required.
+A phase-by-phase roadmap to build Swarnyam: a production-aware multi-agent AI coding system using a hosted free API (Groq) as primary inference, with local llama.cpp as an offline fallback — no GPU required.
 
 ## Project Overview
 
-**Goal:** Build a multi-agent system that takes a coding task + a target repository, and autonomously plans, researches, writes, tests, and debugs code changes until they pass — inspired by the KaggleCoder Swarm architecture, with production-grade safety, cost tracking, and quality-gating built in from the start rather than bolted on.
+**Goal:** Build Swarnyam — a multi-agent system that takes a coding task + a target repository, and autonomously plans, researches, writes, tests, and debugs code changes until they pass — inspired by the KaggleCoder Swarm architecture, with production-grade safety, cost tracking, and quality-gating built in from the start rather than bolted on.
 
 ### Core Design Decisions
 
@@ -306,24 +306,36 @@ Run the exact same task on a clean machine (or after deleting your local venv) u
 
 ---
 
-## Phase 10 — CI/CD (Real Regression Gate)
+## Phase 10 — Latency, Response Quality & Pipeline Optimization (Phase 6 & 7 Fixes)
 
-**Objective:** Auto-validate your own project code on every change — using the eval harness as the actual quality gate, not just lint/test-pass on the swarm's own codebase.
+**Objective:** Eliminate latency bottlenecks, reduce token bloat, and resolve response formatting and reliability issues discovered during parallel context gathering (Phase 6) and local CPU fallback inference (Phase 7).
+
+### Context & Problems Addressed
+
+During real-world benchmarking of Phase 6 and Phase 7:
+- **Local Fallback Latency Spikes (Phase 7):** On CPU, local `llama.cpp` inference for a single agent call can reach 70–90+ seconds when processing bloated prompt contexts, resulting in multi-minute solve times.
+- **CPU Resource Contention (Phase 6 + 7):** Concurrently fanning out 3 context agents in parallel (`Researcher`, `Repo Context`, `Architect`) works well with remote cloud APIs, but causes severe CPU thread contention and RAM thrashing when running on local models.
+- **Output Fragility & Formatting Failures in Small Models (Phase 7):** Small local models (e.g. 1.5B–3B parameters) frequently wrap unified diffs in conversational markdown, omit standard patch headers (`--- a/`, `+++ b/`), or emit malformed JSON, triggering diff rejection or failed review loops.
+- **Context Bloat & Token Waste (Phase 6):** Unbounded web snippets from DuckDuckGo and raw ChromaDB code snippets flood the Coder's prompt with noise, degrading generation quality and increasing costs.
 
 ### Tasks
 
-- Write a GitHub Actions workflow: install deps, run `ruff check .`, run `pytest`
-- Run the Phase 4.5 eval harness as part of the workflow — fail the build if pass rate drops below a set threshold vs. the last known-good run
-- Trigger on push and pull request
-- (Optional) Add a badge to your README showing build status
+- **Prompt & Context Budgeting / Compression (Phase 6 Fix):** Implement strict per-agent token budgets and smart truncation for `Researcher` notes, `Repo Context` snippets, and `Architect` recommendations before merging into `DesignContext`.
+- **Adaptive Concurrency Control (Phase 6 + 7 Fix):** Dynamically serialize or stagger agent execution when running under `--offline` or local fallback to eliminate CPU thrashing, while keeping remote API calls fully parallel.
+- **Local `llama.cpp` Inference Tuning (Phase 7 Fix):** Optimize `n_threads` allocation (bound to physical cores, not hyperthreaded vCPUs), batch sizes (`n_batch`), dynamic context window sizing (`n_ctx`), and prompt token pre-allocation to cut CPU latency by 40–60%.
+- **Robust Diff & JSON Auto-Repair for Weak Models (Phase 7 Fix):** Implement heuristic/regex repair and normalization for small model outputs: automatically extract diff blocks, synthesize missing unified diff headers, strip markdown prose, and repair malformed JSON.
+- **Prompt & Chunk Response Caching:** Add in-memory and disk caching for deterministic agent queries (e.g., repeated ChromaDB code chunk summarization and identical research queries) to achieve instant (0ms) response times for cached steps.
 
 ### Deliverable
 
-Every push to GitHub automatically lints, tests, and runs the eval suite against your codebase, visible in the Actions tab — a real regression gate, not just style checking.
+A highly optimized pipeline where:
+1. Local offline solve runs complete with significantly reduced wall-clock time and zero CPU lockup.
+2. Context passed to the Coder is dense, relevant, and strictly token-budgeted.
+3. Diff parsing reliably recovers valid patches even from smaller 1.5B–3B parameter fallback models.
 
 ### Success Check
 
-Deliberately push a lint error, a failing test, and a change that would drop eval pass rate; confirm CI catches all three and reports failure.
+Run an end-to-end task under `--offline` mode before and after optimizations: verify at least a 2x reduction in local execution latency, and confirm that the small model's diff applies cleanly without JSON/unidiff formatting errors.
 
 ---
 
@@ -342,7 +354,7 @@ Deliberately push a lint error, a failing test, and a change that would drop eva
 | 7 | Local fallback + fallback chain | 1.5–2.5 days |
 | 8 | Logging + run reports | 1–1.5 days |
 | 9 | Docker | 1–2 days |
-| 10 | CI/CD (real regression gate) | 0.5–1 day |
+| 10 | Latency & response optimization (Phase 6/7 fixes) | 1.5–2 days |
 
 **Total:** roughly 3.5–4.5 weeks part-time, depending on debugging time — Phases 3, 4, 4.5, and 5 are the most involved and worth not rushing.
 

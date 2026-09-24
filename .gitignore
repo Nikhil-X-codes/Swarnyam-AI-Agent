@@ -23,6 +23,7 @@ env/
 .mypy_cache/
 .coverage
 htmlcov/
+site/
 chroma_db/
 *.sqlite3
 *.db
